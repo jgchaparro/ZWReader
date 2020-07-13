@@ -1,0 +1,21 @@
+???
+
+3.0:
+	+ Added smart slicing
+	· Failed attempt to rearrange the code
+	
+---- ??? ------
+
+4.0:
+	+ Script rearranged.
+	- Deleted procedence code 8.
+
+4.1:
+	+ Frequency decreases by ss_decrease (1) with every use. This prevents
+	  that words that appear frequently for a short period of time
+	  will not show hitherto.
+
+5.0:
+	+ Auto detects text version (trad. or simp.).
+	+ Auto detects if URL is from Wikipedia.
+		-> redirects to zh-tw version to get text.

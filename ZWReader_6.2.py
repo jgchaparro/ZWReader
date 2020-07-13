@@ -507,7 +507,7 @@ temp_file.save(os.path.join(script_dir, 'Output_file', full_output_filename))
 
 df_words.freq -= ss_decrease
 df_words.loc[df_words.loc[:,'freq'] <= ss_minumum, 'freq'] = ss_minumum
-df_words.loc[:,'simp':].to_csv(os.path.join(script_dir, 'Files', 'Dictionary 3.1.csv'), sep='\\', encoding='utf-8')
+df_words.to_csv(os.path.join(script_dir, 'Files', 'Dictionary 3.1.csv'), sep='\\', encoding='utf-8', index=False)
 print('Changes to csv made.')
 
 pyautogui.hotkey('ctrl', 'shift', 'e')

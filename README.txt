@@ -6,12 +6,12 @@ It is **not intended to work as a translator**, but as a learning tool. The code
 
 ## Features
 
-• Translation for every word and character in the article before even reading it.
-• Translation for every paragraph.
-• Separate translation of the characters of the word.
-• Allows dynamic selection of characters to translate. 
-• Color codes to help searching words.  
-• Ignore desired words or characters by adding them to a .txt file.
+* Translation for every word and character in the article before even reading it.
+* Translation for every paragraph.
+* Separate translation of the characters of the word.
+* Allows dynamic selection of characters to translate. 
+* Color codes to help searching words.  
+* Ignore desired words or characters by adding them to a .txt file.
 
 ## Basic functionting
 
@@ -22,16 +22,16 @@ It is **not intended to work as a translator**, but as a learning tool. The code
 
 ## Modules required
 
-• jieba ver. 0.42.1  
-• openpyxl ver. 3.0.3  
-• requests ver. 2.22.0  
-• re ver. 2.2.1  
-• os  
-• bs4 ver. 4.8.2  
-• pyperclip ver. 1.8.0  
-• pandas ver. 1.0.1
-• pyautogui
-• googletrans  
+* jieba ver. 0.42.1  
+* openpyxl ver. 3.0.3  
+* requests ver. 2.22.0  
+* re ver. 2.2.1  
+* os  
+* bs4 ver. 4.8.2  
+* pyperclip ver. 1.8.0  
+* pandas ver. 1.0.1
+* pyautogui
+* googletrans  
 
 ## Color codes
 

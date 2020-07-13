@@ -9,7 +9,7 @@ It is **not intended to work as a translator**, but as a learning tool. The code
 • Translation for every word and character in the article before even reading it.
 • Translation for every paragraph.
 • Separate translation of the characters of the word.
-• Allows dynamic selection of characters to translate. 
+• Dynamic selection of characters to translate. 
 • Color codes to help searching words.  
 • Ignore desired words or characters by adding them to a .txt file.
 

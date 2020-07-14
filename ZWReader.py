@@ -422,7 +422,7 @@ def add_to_excel(word, pinyin, defs, index = None, is_zi = False, procedence = 2
 
     if type(word) == str and is_zi == False:
         if smart_slicing == True and len(word) > 1 and defs != 'X':
-            smart_slice(word, pinyin)
+            smart_slice(word)
 
     if index != None:
         add_count(word, index)

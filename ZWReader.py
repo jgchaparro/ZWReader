@@ -62,7 +62,6 @@ def generate_lists():
     global full_dic
     global full_dic_simp
     df_words = pd.read_csv(os.path.join(script_dir, 'Files', 'Dictionary 3.2.csv'), sep='\\', encoding='utf-8')
-    df_words = df_words.drop('Unnamed: 0', axis=1)
     df_words = df_words.sort_values(by=['freq', 'pinyin'], ascending=[False, False])
     full_dic = df_words.loc[:,'trad'].tolist()
     full_dic_simp = df_words.loc[:,'simp'].tolist()

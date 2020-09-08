@@ -503,7 +503,7 @@ temp_file.save(os.path.join(script_dir, 'Output_file', full_output_filename))
 
 # Add changes to dataframe
 
-df_words.freq -= 0
+df_words.freq -= ss_decrease
 df_words.loc[df_words.loc[:,'freq'] <= ss_minumum, 'freq'] = ss_minumum
 df_words.to_csv(os.path.join(script_dir, 'Files', 'Dictionary 3.2.csv'), sep='\\', encoding='utf-8', index=False)
 print('Changes to csv made.')

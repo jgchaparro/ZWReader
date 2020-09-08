@@ -16,7 +16,7 @@ translation = True
 
 smart_slicing = True # If true, slices characters with a frequency lower than ss_threshold
 ss_threshold = 20
-ss_decrease = 1
+ss_decrease = 0
 ss_minumum = 0
 
 #-----------------------------------
@@ -165,7 +165,7 @@ def clean_and_slice(pars):
             words.append(word)
     
     print('''Text cleaned.
-    Words cut.''')
+Words cut.''')
 
 def detect_simp(words):
     sample_size = 50
@@ -503,9 +503,9 @@ temp_file.save(os.path.join(script_dir, 'Output_file', full_output_filename))
 
 # Add changes to dataframe
 
-df_words.freq -= ss_decrease
+df_words.freq -= 0
 df_words.loc[df_words.loc[:,'freq'] <= ss_minumum, 'freq'] = ss_minumum
 df_words.to_csv(os.path.join(script_dir, 'Files', 'Dictionary 3.2.csv'), sep='\\', encoding='utf-8', index=False)
 print('Changes to csv made.')
 
-#pyautogui.hotkey('shift', 'alt', 'e')
+pyautogui.hotkey('shift', 'alt', 'e')

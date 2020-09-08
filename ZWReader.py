@@ -8,7 +8,7 @@
 #-----------------------------------
 # Modify basic parameters:
 
-output_file_name = 'ZHWikiReader_output_file' # Do not add the file extension.
+output_file_name = 'ZWReader_output_file' # Do not add the file extension.
 always_slice = False # If true, gives the definition of the individual characters of the word.
 traditional = True # False for using simplified in the output file.
 
@@ -16,7 +16,7 @@ translation = True
 
 smart_slicing = True # If true, slices characters with a frequency lower than ss_threshold
 ss_threshold = 20
-ss_decrease = 1
+ss_decrease = 0
 ss_minumum = 0
 
 #-----------------------------------
@@ -45,6 +45,7 @@ from googletrans import Translator
 counter = 2
 procedence_counter = 5
 last_procedence = 6
+last_pinyin = ''
 
 script_dir = os.path.dirname(__file__)
 jieba.set_dictionary(os.path.join(script_dir, 'Files', 'dict.txt.big.txt'))
@@ -154,7 +155,6 @@ def clean_and_slice(pars):
                 clean_text = clean_text.replace(symbol, "")
         
         clean_text += '\n'
-        print('Text cleaned.')
 
         # Extract words using Jieba algorithm.
 
@@ -163,8 +163,9 @@ def clean_and_slice(pars):
         
         for word in cut_words:
             words.append(word)
-        
-    print('Words cut.')
+    
+    print('''Text cleaned.
+Words cut.''')
 
 def detect_simp(words):
     sample_size = 50
@@ -233,9 +234,9 @@ def main():
         elif word != '':
                 process(word)
 
-    # -----------------------------------------------------------------------------------
-    # Word functions
-    # -----------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
+# Word functions
+# -----------------------------------------------------------------------------------
 
 #-------------------------
 
@@ -255,10 +256,8 @@ def process(word, is_zi = False, procedence = 2):
 
     elif word in ignores_dont_try:
         if is_zi == False:
-            #print('In not-to-try list. Trying to rescue.')
             rescue_word(word)
         else:
-            #print('Character in ignore list.')
             add_to_excel(word, 'X', 'Character in ignore list', procedence = 3)
 
     elif word in full_dic:
@@ -280,7 +279,6 @@ def extract_info(index):
 
 def retrieve_from_current(word, is_zi = False, procedence = 2):
         i = current_indices[current_words.index(word)]
-        #print('Retrieving from current.')
 
         word, pinyin, defs = extract_info(i)
         add_to_excel(word, pinyin, defs, index = i, is_zi = is_zi, procedence = procedence)
@@ -290,10 +288,8 @@ def retrieve_from_current(word, is_zi = False, procedence = 2):
 
 def in_ignore_words(word, is_zi = False):
     if is_zi == False and word in ignores_words:
-        #print('In ignored words.')
         return True
     elif is_zi == True and word in ignores_zi:
-        #print('In ignored characters.')
         return True
     else:
         return False
@@ -301,10 +297,8 @@ def in_ignore_words(word, is_zi = False):
 def check_if_in_dont_try(word, is_zi = False, procedence = 2):
     ignores_dont_try.index(word)
     if is_zi == False:
-        #print('In not-to-try list. Trying to rescue.')
         rescue_word(word)
     else:
-        #print('Character in ignore list.')
         add_to_excel(word, 'X', 'Character in ignore list', 3)
 
 def rescue_word(word):
@@ -315,11 +309,9 @@ def rescue_word(word):
         if word[:2] in full_dic:
             process(word[:2])
             process(word[2])
-            #print('Rescued.')
         elif word[1:] in full_dic:
             process(word[0])
             process(word[1:])
-            #print('Rescued.')
         else:
             slice_into_zis(word, procedence = 3)
 
@@ -327,7 +319,6 @@ def rescue_word(word):
         if word[:2] in full_dic and word[2:] in full_dic:
             process(word[:2])
             process(word[2:])
-            #print('Rescued.')
         elif word[:2] in full_dic and word[2:] not in full_dic:
             process(word[:2])
             combined_pinyin = ''
@@ -337,7 +328,6 @@ def rescue_word(word):
                 except:
                     combined_pinyin += ' X '
             add_to_excel(word[2:], combined_pinyin, 'X', procedence = 3)
-            #print('Partially rescued.')
         elif word[:2] not in full_dic and word[2:] in full_dic:
             combined_pinyin = ''
             for zi in word[:2]:
@@ -347,15 +337,12 @@ def rescue_word(word):
                     combined_pinyin += ' X '
             add_to_excel(word[:2], combined_pinyin, 'X', procedence = 3)
             process(word[2:])
-            #print('Partially rescued.')
         elif word[:-1] in full_dic:
             process(word[:-1])
             process(word[-1])
-            #print('Rescued.')
         elif word[1:] in full_dic:
             process(word[0])
             process(word[1:])
-            #print('Rescued.')
         else:
             slice_into_zis(word, procedence = 3)
     
@@ -370,7 +357,6 @@ def rescue_word(word):
 
 def retrieve_from_dictionary(word, is_zi = False, procedence = 2):
     df_i = full_dic.index(word)
-    #print('Retrieving from dictionary.')
 
     word, pinyin, defs = extract_info(df_i)
 
@@ -390,30 +376,45 @@ def slice_into_zis(word, procedence = ''):
 
 def out_of_dictionary(word, is_zi = False):
     if is_zi == False:
-        #print('Not in dictionary. Slicing.')
         rescue_word(word)
 
     else:
-        #print('Character not in dictionary.')
         add_to_excel(word, 'X', 'Character not in dictionary.', procedence = 3)
 
 # Add to excel functions
 
-def add_to_excel(word, pinyin, defs, index = None, is_zi = False, procedence = 2):
+def add_to_excel(word, pinyin, defs,
+                add_info = None, index = None, 
+                is_zi = False, procedence = 2,
+                freq = ''):
+    """
+    B: word in Chinese
+    C: pinyin
+    D: traduction in English
+    F: frequency
+    G: procedence
+    """
+
+    #Prior comprobations
+
+    if index != None:
+        add_count(word, index)
+        freq = df_words.iloc[index, 4] + 1
+    elif is_zi:
+        zi_index = full_dic.index(word)
+        freq = df_words.iloc[zi_index, 4] + 1
+
 
     #Prepare cells id
 
-    c_zh = 'A' + str(counter)
-    c_pin = 'B' + str(counter)
-    c_en = 'C' + str(counter)
-    c_proc = 'G' + str(counter)
+    letters = ['B', 'C', 'D', 'F', 'G']
+    cells = [letter + str(counter) for letter in letters]
+    values = [word, pinyin, defs, freq, procedence]
 
     #Add values to cells
 
-    temp[c_zh].value = word
-    temp[c_pin].value = pinyin
-    temp[c_en].value = defs
-    temp[c_proc].value = procedence
+    for cell, value_ in zip(cells, values):
+        temp[cell].value = value_
 
     add_counter()
     global last_procedence
@@ -422,9 +423,6 @@ def add_to_excel(word, pinyin, defs, index = None, is_zi = False, procedence = 2
     if type(word) == str and is_zi == False:
         if smart_slicing == True and len(word) > 1 and defs != 'X':
             smart_slice(word)
-
-    if index != None:
-        add_count(word, index)
 
 def add_to_current(word, index):
     current_words.append(word)
@@ -480,7 +478,7 @@ current_words, current_indices = [], []
 
 #Load template
 
-temp_file = openpyxl.load_workbook(os.path.join(script_dir, 'Files', 'template.xlsx'))
+temp_file = openpyxl.load_workbook(os.path.join(script_dir, 'Files', 'template_1.1.xlsx'))
 temp = temp_file['ZH']
 trans = temp_file['Translation']
 
@@ -505,7 +503,7 @@ temp_file.save(os.path.join(script_dir, 'Output_file', full_output_filename))
 
 # Add changes to dataframe
 
-df_words.freq -= ss_decrease
+df_words.freq -= 0
 df_words.loc[df_words.loc[:,'freq'] <= ss_minumum, 'freq'] = ss_minumum
 df_words.to_csv(os.path.join(script_dir, 'Files', 'Dictionary 3.2.csv'), sep='\\', encoding='utf-8', index=False)
 print('Changes to csv made.')

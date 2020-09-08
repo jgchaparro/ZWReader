@@ -16,7 +16,7 @@ translation = True
 
 smart_slicing = True # If true, slices characters with a frequency lower than ss_threshold
 ss_threshold = 20
-ss_decrease = 5
+ss_decrease = 1
 ss_minumum = 0
 
 #-----------------------------------
@@ -510,4 +510,4 @@ df_words.loc[df_words.loc[:,'freq'] <= ss_minumum, 'freq'] = ss_minumum
 df_words.to_csv(os.path.join(script_dir, 'Files', 'Dictionary 3.2.csv'), sep='\\', encoding='utf-8', index=False)
 print('Changes to csv made.')
 
-pyautogui.hotkey('ctrl', 'shift', 'e')
+pyautogui.hotkey('shift', 'alt', 'e')

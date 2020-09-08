@@ -1,5 +1,5 @@
 # Author: Jaime García Chaparro
-# Version: 6.4
+# Version: 6.3
 
 # Intended for personal use only.
 # I do not own the content of the dictionaries used in the code.

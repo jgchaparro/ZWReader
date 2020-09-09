@@ -1,5 +1,5 @@
 # Author: Jaime García Chaparro
-# Version: 6.4
+# Version: 6.5
 
 # Intended for personal use only.
 # I do not own the content of the dictionaries used in the code.
@@ -8,7 +8,8 @@
 #-----------------------------------
 # Modify basic parameters:
 
-output_file_name = 'ZWReader_output_file' # Do not add the file extension.
+output_dictionary_filename = 'ZWReader_dictionary' # Do not add the file extension.
+output_translation_filename = 'ZWReader_translation' # Do not add the file extension.
 always_slice = False # If true, gives the definition of the individual characters of the word.
 traditional = True # False for using simplified in the output file.
 
@@ -127,8 +128,8 @@ def translate(pars):
         c_original = 'A' + str(t_counter)
         c_translation = 'B' + str(t_counter)
 
-        zh_cell = trans[c_original]
-        eng_cell = trans[c_translation]
+        zh_cell = temp_trans[c_original]
+        eng_cell = temp_trans[c_translation]
 
         zh_cell.value = par
         zh_cell.alignment =  Alignment(wrapText=True, vertical = 'center')
@@ -478,9 +479,8 @@ current_words, current_indices = [], []
 
 #Load template
 
-temp_file = openpyxl.load_workbook(os.path.join(script_dir, 'Files', 'template_1.1.xlsx'))
+temp_file = openpyxl.load_workbook(os.path.join(script_dir, 'Files', 'template_2.0_A.xlsx'))
 temp = temp_file['ZH']
-trans = temp_file['Translation']
 
 
 #Extract article text
@@ -490,6 +490,8 @@ words = []
 pars = obtain_raw_text(p.paste())
 clean_and_slice(pars)
 if translation == True:
+    temp_trans_file = openpyxl.load_workbook(os.path.join(script_dir, 'Files', 'template_2.0_B.xlsx'))
+    temp_trans = temp_trans_file['Translation']
     translate(pars)
 
 #Execute
@@ -498,8 +500,13 @@ main()
 
 # Create output file
 
-full_output_filename = output_file_name + '.xlsx'
-temp_file.save(os.path.join(script_dir, 'Output_file', full_output_filename))
+full_output_dictionary_filename = output_dictionary_filename + '.xlsx'
+temp_file.save(os.path.join(script_dir, 'Output_file', full_output_dictionary_filename))
+
+if translation == True:
+    full_output_translation_filename = output_translation_filename + '.xlsx'
+    temp_trans_file.save(os.path.join(script_dir, 'Output_file', full_output_translation_filename))
+
 
 # Add changes to dataframe
 

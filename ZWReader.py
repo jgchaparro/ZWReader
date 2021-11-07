@@ -1,5 +1,5 @@
 # Author: Jaime García Chaparro
-# Version: 6.5
+# Version: 7.1
 
 # Intended for personal use only.
 # I do not own the content of the dictionaries used in the code.
@@ -13,11 +13,14 @@ output_translation_filename = 'ZWReader_translation' # Do not add the file exten
 always_slice = False # If true, gives the definition of the individual characters of the word.
 traditional = True # False for using simplified in the output file.
 
-translation = True
+translation = False
+trans_error = False
 
 smart_slicing = True # If true, slices characters with a frequency lower than ss_threshold
-ss_threshold = 20
-ss_decrease = 0
+
+ss_threshold = 100
+ss_increase = 1
+ss_decrease = 1
 ss_minumum = 0
 
 #-----------------------------------
@@ -39,7 +42,7 @@ from bs4 import BeautifulSoup
 import pyperclip as p
 import pandas as pd
 import pyautogui
-from googletrans import Translator
+from google_trans_new import google_translator
 
 #Basic counters
 
@@ -78,8 +81,11 @@ def obtain_raw_text(raw_url):
     }
 
     print('Obtaining text.')
+    global wiki
+    wiki = False
 
     if 'https://zh.wikipedia.org/' in raw_url:
+        wiki = True
         raw_url = 'https://zh.wikipedia.org/zh-tw/' + raw_url.split('/')[-1]
 
     if raw_url[-4:].lower() == '.pdf':
@@ -110,10 +116,12 @@ def extract_from_pdf(raw_url):
     return pars
 
 def translate(pars):
-    t_counter = 2
-    translator = Translator()
-    n_pars = len(pars)
+    global trans_error
 
+    t_counter = 2
+    translator = google_translator(url_suffix='es')
+    n_pars = len(pars)
+    
     for par in pars:
         i = t_counter - 1
         print(f'Translating paragraph {i} out of {n_pars}.')
@@ -121,9 +129,12 @@ def translate(pars):
             par = par.text
         except:
             pass
-
-        translation = translator.translate(par).text
-
+        
+        try:
+            translation = translator.translate(par, lang_tgt='en')
+        except:
+            trans_error = True
+            break
 
         c_original = 'A' + str(t_counter)
         c_translation = 'B' + str(t_counter)
@@ -135,7 +146,7 @@ def translate(pars):
         zh_cell.alignment =  Alignment(wrapText=True, vertical = 'center')
         eng_cell.value = translation
         eng_cell.alignment = Alignment(wrapText=True, vertical = 'center')
-        t_counter += 1     
+        t_counter += 1  
 
 def clean_and_slice(pars):
     """Removes punctuation characters, as well as other symbols."""
@@ -144,12 +155,12 @@ def clean_and_slice(pars):
 
     for par in pars:
         try:
-            raw_1 = re.sub(r"\[[A-z]*\]", "", par.text.strip()) #Removes anotations.
+            raw_1 = re.sub(r"\[[A-zA-я]*\]", "", par.text.strip()) #Removes anotations.
         except:
-            raw_1 = re.sub(r"\[[A-z]*\]", "", par.strip()) # For PDFs
-        raw_2 = re.sub(r"[A-z]*", "", raw_1) #Removes Latin characters.
+            raw_1 = re.sub(r"\[[A-zA-я]*\]", "", par.strip()) # For PDFs
+        raw_2 = re.sub(r"[A-zA-я]*", "", raw_1) #Removes Latin and Cyrillic characters.
 
-        to_clean = ["|", "‧", "．", "○", "…", '\"', "─", "〉", "〈", " ", "﻿", "#", ":", "％", "~", ")", "(", ";", "/", "′", "°", "《", "》", "%", "%", "-", "“", "”", "－", "·", "\\", " ", ".", "︰", "（", "）", "；", "、", ",", "："]
+        to_clean = ["|", "‧", "．", "○", "…", '\"', "─", "〉", "〈", " ", "﻿", "#", ":", "％", "~", ")", "(", ";", "/", "′", "°", "《", "》", "%", "%", "-", "“", "”", "－", "·", "\\", " ", ".", "︰", "（", "）", "；", "、", ",", "：", "©", "?"]
         clean_text = raw_2
         for symbol in to_clean:
             if symbol in raw_2:
@@ -165,12 +176,17 @@ def clean_and_slice(pars):
         for word in cut_words:
             words.append(word)
     
-    print('''Text cleaned.
-Words cut.''')
+    print('Text cleaned.\nWords cut.')
 
 def detect_simp(words):
-    sample_size = 50
-    simp_threshold = 0.2
+    """Detects if the text uses simplified chinese.
+    Sets the character set to traditional by default-"""
+
+    global charset
+    charset = 'trad'
+
+    sample_size = 100
+    simp_threshold = 0.3
 
     words_to_evaluate = [word for word in words[:sample_size] if word != '\n']
     sample_size = len(words_to_evaluate)
@@ -195,8 +211,11 @@ def switch_to_simp():
     global full_dic
     global full_dic_simp
     global traditional
+    global charset
     full_dic = full_dic_simp
     traditional = False
+    charset = 'simp'
+
 
 def main():
     """Search the words or characters in the lists."""
@@ -226,9 +245,9 @@ def main():
                #add_to_excel('', '', '', procedence = 9)
                pass
             elif word == '。':
-                add_to_excel('', '', '', procedence = 10) 
+                add_to_excel('.', '', '', procedence = 10) 
             elif last_procedence != 11:
-                add_to_excel('', '', '', procedence = 11)
+                add_to_excel('.', '', '', procedence = 11)
         elif re.search('[0-9]', word) != None:
             if last_procedence != 7:
                 add_to_excel(int(word[:4]), '', '', procedence = 7)
@@ -241,11 +260,10 @@ def main():
 
 #-------------------------
 
-def process(word, is_zi = False, procedence = 2):
-    if len(word) == 1:
-        if is_zi == True:
-            if procedence != 3:
-                procedence = ''
+def process(word, is_zi = False, procedence = 2, error = False):
+    if len(word) == 1 and error == False:
+        if is_zi:
+            procedence = ''
         else:   # Set procedence to 1 if non-zi word is 1 char long.
             procedence = 1
 
@@ -268,7 +286,7 @@ def process(word, is_zi = False, procedence = 2):
         out_of_dictionary(word, is_zi)
 
 def extract_info(index):
-    if traditional == True:
+    if traditional:
         word = df_words.iloc[index, 0]
     else:
         word = df_words.iloc[index, 1]
@@ -296,6 +314,7 @@ def in_ignore_words(word, is_zi = False):
         return False
 
 def check_if_in_dont_try(word, is_zi = False, procedence = 2):
+    """Checks if the word is contained in the don't try list"""
     ignores_dont_try.index(word)
     if is_zi == False:
         rescue_word(word)
@@ -303,8 +322,11 @@ def check_if_in_dont_try(word, is_zi = False, procedence = 2):
         add_to_excel(word, 'X', 'Character in ignore list', 3)
 
 def rescue_word(word):
+    """Checks if a long word can be sliced into smaller chunks 
+    that are contained in the dictionary"""
+
     if len(word) == 2:
-        slice_into_zis(word, procedence = 3)
+        slice_into_zis(word, procedence = 3, is_zi = False, error = True)
 
     elif len(word) == 3:
         if word[:2] in full_dic:
@@ -314,7 +336,7 @@ def rescue_word(word):
             process(word[0])
             process(word[1:])
         else:
-            slice_into_zis(word, procedence = 3)
+            slice_into_zis(word, procedence = 3, is_zi = False, error = True)
 
     elif len(word) == 4:
         if word[:2] in full_dic and word[2:] in full_dic:
@@ -345,7 +367,7 @@ def rescue_word(word):
             process(word[0])
             process(word[1:])
         else:
-            slice_into_zis(word, procedence = 3)
+            slice_into_zis(word, procedence = 3, is_zi = False, error  = True)
     
     else:
         combined_pinyin = ''
@@ -363,7 +385,9 @@ def retrieve_from_dictionary(word, is_zi = False, procedence = 2):
 
     if is_zi == False:
         add_to_excel(word, pinyin, defs, index = df_i, procedence = procedence)
-    else:
+    else: # if it is a character
+        if pinyin not in last_pinyin:
+            word, pinyin, defs, index = check_pinyin_coincidence(word, pinyin, defs, index = df_i)
         add_to_excel(word, pinyin, defs, procedence = procedence, is_zi = True)
 
     add_to_current(word, df_i)
@@ -371,14 +395,24 @@ def retrieve_from_dictionary(word, is_zi = False, procedence = 2):
     if always_slice == True and is_zi == False and len(word) > 1:
         slice_into_zis(word, procedence = "")
 
-def slice_into_zis(word, procedence = ''):
+def slice_into_zis(word, procedence = '', is_zi = True, error = False):
     for i in range(0, len(word)):
-        process(word[i], is_zi = True, procedence = procedence)
+        process(word[i], is_zi = is_zi, procedence = procedence, error = error)
+
+def check_pinyin_coincidence(zi, pinyin, defs, index):
+        df_zi = df_words.loc[(df_words[charset] == zi) & (df_words['pinyin'].isin(last_pinyin.split(' ')))]
+        if len(df_zi) == 1:
+            new_pinyin = df_zi.iloc[0]['pinyin']
+            new_defs = df_zi.iloc[0]['def']
+            new_index = df_zi.index[0]
+            return zi, new_pinyin, new_defs, new_index
+        else:
+            return zi, pinyin, defs, index
+        
 
 def out_of_dictionary(word, is_zi = False):
     if is_zi == False:
         rescue_word(word)
-
     else:
         add_to_excel(word, 'X', 'Character not in dictionary.', procedence = 3)
 
@@ -421,8 +455,11 @@ def add_to_excel(word, pinyin, defs,
     global last_procedence
     last_procedence = procedence
 
+    global last_pinyin
     if type(word) == str and is_zi == False:
+        last_pinyin = pinyin.lower()
         if smart_slicing == True and len(word) > 1 and defs != 'X':
+            
             smart_slice(word)
 
 def add_to_current(word, index):
@@ -431,14 +468,14 @@ def add_to_current(word, index):
 
 def add_count(word, index):
     try:
-        df_words.iloc[index, 4] += 1
+        df_words.iloc[index, 4] += ss_increase
     except:
         pass
 
     if len(word) > 1:
         for i in range(len(word)):
             try:
-                df_words.iloc[full_dic.index(word[i]), 4] += 1
+                df_words.iloc[full_dic.index(word[i]), 4] += ss_increase
             except:
                 pass
 
@@ -503,7 +540,7 @@ main()
 full_output_dictionary_filename = output_dictionary_filename + '.xlsx'
 temp_file.save(os.path.join(script_dir, 'Output_file', full_output_dictionary_filename))
 
-if translation == True:
+if translation:
     full_output_translation_filename = output_translation_filename + '.xlsx'
     temp_trans_file.save(os.path.join(script_dir, 'Output_file', full_output_translation_filename))
 
@@ -515,4 +552,13 @@ df_words.loc[df_words.loc[:,'freq'] <= ss_minumum, 'freq'] = ss_minumum
 df_words.to_csv(os.path.join(script_dir, 'Files', 'Dictionary 3.2.csv'), sep='\\', encoding='utf-8', index=False)
 print('Changes to csv made.')
 
-pyautogui.hotkey('shift', 'alt', 'e')
+if trans_error or translation == False:
+    if wiki:
+        pyautogui.hotkey('shift', 'alt', 'w')
+    else:    
+        pyautogui.hotkey('shift', 'alt', 'a')
+else:
+    if wiki:
+        pyautogui.hotkey('shift', 'alt', 'w')
+    else:    
+        pyautogui.hotkey('shift', 'alt', 'e')

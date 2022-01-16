@@ -12,7 +12,7 @@ output_file_name = 'ZWReader_output_file' # Do not add the file extension.
 always_slice = False # If true, gives the definition of the individual characters of the word.
 traditional = True # False for using simplified in the output file.
 
-translation = True
+translation = False
 
 smart_slicing = True # If true, slices characters with a frequency lower than ss_threshold
 ss_threshold = 20
@@ -225,9 +225,9 @@ def main():
                #add_to_excel('', '', '', procedence = 9)
                pass
             elif word == '。':
-                add_to_excel('', '', '', procedence = 10) 
+                add_to_excel('.', '', '', procedence = 10) 
             elif last_procedence != 11:
-                add_to_excel('', '', '', procedence = 11)
+                add_to_excel('.', '', '', procedence = 11)
         elif re.search('[0-9]', word) != None:
             if last_procedence != 7:
                 add_to_excel(int(word[:4]), '', '', procedence = 7)
@@ -487,7 +487,8 @@ trans = temp_file['Translation']
 
 words = []
 
-pars = obtain_raw_text(p.paste())
+raw_url = p.paste()
+pars = obtain_raw_text(raw_url)
 clean_and_slice(pars)
 if translation == True:
     translate(pars)
@@ -508,4 +509,7 @@ df_words.loc[df_words.loc[:,'freq'] <= ss_minumum, 'freq'] = ss_minumum
 df_words.to_csv(os.path.join(script_dir, 'Files', 'Dictionary 3.2.csv'), sep='\\', encoding='utf-8', index=False)
 print('Changes to csv made.')
 
-pyautogui.hotkey('shift', 'alt', 'e')
+if 'https://zh.wikipedia.org/' in raw_url:
+    pyautogui.hotkey('shift', 'alt', 'w')
+else:
+    pyautogui.hotkey('shift', 'alt', 'a')
